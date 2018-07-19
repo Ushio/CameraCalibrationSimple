@@ -29,8 +29,14 @@
     <ClInclude Include="src\chessboard.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\serialization_type.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="icon.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

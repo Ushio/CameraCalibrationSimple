@@ -1,5 +1,5 @@
 #include "ofApp.h"
-
+#include "serialization_type.hpp"
 
 inline std::vector<cv::Point3f> chessboard_corners(int cornerWidth, int cornerHeight, float size) {
 	std::vector<cv::Point3f> points;
@@ -11,14 +11,8 @@ inline std::vector<cv::Point3f> chessboard_corners(int cornerWidth, int cornerHe
 	return points;
 }
 
-
-
 //--------------------------------------------------------------
 void ofApp::setup(){
-	//cv::Mat img(256, 256, CV_8UC3, cv::Scalar(100, 100, 100));
-	//cv::circle(img, cv::Point(128, 128), 100, cv::Scalar(200, 100, 100), 4);
-	//imshow("image", img);
-
 	ofDirectory src("src");
 	src.allowExt("JPG");
 	src.listDir();
@@ -97,6 +91,18 @@ void ofApp::setup(){
 		printf("%.4f, %.4f, %.4f\n", cameraMatrix.at<double>(row, 0), cameraMatrix.at<double>(row, 1), cameraMatrix.at<double>(row, 2));
 	}
 
+	CameraIntrinsic intrinsic;
+	intrinsic.distCoeffs = distCoeffs;
+	intrinsic.camera = cameraMatrix;
+	intrinsic.imageWidth = cameraImageWidth;
+	intrinsic.imageHeight = cameraImageHeight;
+
+	{
+		std::ofstream ofs(ofToDataPath("camera_calibrate.bin").c_str(), std::ios::binary);
+		cereal::PortableBinaryOutputArchive ar(ofs);
+		ar(intrinsic);
+	}
+
 	cv::Mat mapx, mapy;
 	cv::initUndistortRectifyMap(cameraMatrix, distCoeffs, cv::Mat(), cameraMatrix, cv::Size(cameraImageWidth, cameraImageHeight), CV_32FC1, mapx, mapy);
 
@@ -104,6 +110,18 @@ void ofApp::setup(){
 		ofFile file(src.getPath(i));
 		cv::Mat image = cv::imread(file.getAbsolutePath());
 		std::string dst = file.getEnclosingDirectory() + "..\\dst\\undistort_" + file.getFileName();
+		cv::Mat undistorted;
+		cv::remap(image, undistorted, mapx, mapy, cv::INTER_LINEAR);
+		cv::imwrite(dst, undistorted);
+	}
+
+	ofDirectory undistort_src("undistort_src");
+	undistort_src.allowExt("JPG");
+	undistort_src.listDir();
+	for (int i = 0; i < undistort_src.size(); i++) {
+		ofFile file(undistort_src.getPath(i));
+		cv::Mat image = cv::imread(file.getAbsolutePath());
+		std::string dst = file.getEnclosingDirectory() + "..\\undistort_dst\\undistort_" + file.getFileName();
 		cv::Mat undistorted;
 		cv::remap(image, undistorted, mapx, mapy, cv::INTER_LINEAR);
 		cv::imwrite(dst, undistorted);
